@@ -15,5 +15,10 @@ async def send_welcome(message: types.message):
                          "Type /help to get this message again.")
 
 
+@dispatcher.message_handler(lambda message: not message.is_command())
+async def get_city(message: types.message):
+    await message.answer(f"Your city is {message.text}")
+
+
 if __name__ == '__main__':
     main()
