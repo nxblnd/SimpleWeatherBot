@@ -23,7 +23,7 @@ async def get_city(message: types.message):
 
 def get_weather(city: str) -> map:
     OWM_LINK = 'https://api.openweathermap.org/data/2.5/weather'
-    r = requests.get(OWM_LINK, params={'q': city, 'appid': os.getenv('OWM_TOKEN')})
+    r = requests.get(OWM_LINK, params={'q': city, 'appid': os.getenv('OWM_TOKEN'), 'units': 'metric'})
     return r.json()
 
 
