@@ -25,7 +25,9 @@ async def not_command(message: types.message):
 
 def get_weather(city: str) -> list[dict[str, Any]]:
     OWM_LINK = 'https://api.openweathermap.org/data/2.5/weather'
-    r = requests.get(OWM_LINK, params={'q': city, 'appid': os.getenv('OWM_TOKEN'), 'units': 'metric'})
+    r = requests.get(OWM_LINK, params={'q': city,
+                                       'appid': os.getenv('OWM_TOKEN'),
+                                       'units': 'metric'})
     return r.json()
 
 
