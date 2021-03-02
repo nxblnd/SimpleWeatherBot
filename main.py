@@ -1,4 +1,6 @@
 import os
+from typing import Any
+
 from aiogram import Bot, Dispatcher, executor, types
 import requests
 
@@ -21,7 +23,7 @@ async def not_command(message: types.message):
     await message.answer("I don't understand this, try using some commands")
 
 
-def get_weather(city: str) -> map:
+def get_weather(city: str) -> list[dict[str, Any]]:
     OWM_LINK = 'https://api.openweathermap.org/data/2.5/weather'
     r = requests.get(OWM_LINK, params={'q': city, 'appid': os.getenv('OWM_TOKEN'), 'units': 'metric'})
     return r.json()
