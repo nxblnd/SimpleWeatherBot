@@ -17,7 +17,8 @@ def main():
 
 @dispatcher.message_handler(commands=['start', 'help'])
 async def send_welcome(message: types.message):
-    await message.answer("I'm simple weather bot. Powered by OpenWeatherMap data.\n"
+    await message.answer("I'm simple weather bot. Powered by OpenWeatherMap data.\n\n"
+                         "Use /current command with city name to get current weather.\n"
                          "Type /help to get this message again.")
 
 
