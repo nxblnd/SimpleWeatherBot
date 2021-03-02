@@ -7,7 +7,8 @@ import requests
 bot = Bot(os.getenv('BOT_TOKEN'))
 dispatcher = Dispatcher(bot)
 
-OWM_links = {'current': 'https://api.openweathermap.org/data/2.5/weather'}
+OWM_links = {'current': 'https://api.openweathermap.org/data/2.5/weather',
+             'geocoding': 'http://api.openweathermap.org/geo/1.0/direct'}
 
 
 def main():
@@ -18,6 +19,14 @@ def main():
 async def send_welcome(message: types.message):
     await message.answer("I'm simple weather bot. Powered by OpenWeatherMap data.\n"
                          "Type /help to get this message again.")
+
+
+def get_city_coords(city: str) -> dict[str, float]:
+    r = requests.get(OWM_links['geocoding'], params={'q': city,
+                                                     'appid': os.getenv('OWM_TOKEN'),
+                                                     'limit': 1})
+    geodata = r.json()
+    return {'lat': geodata[0]['lat'], 'lon': geodata[0]['lon']}
 
 
 @dispatcher.message_handler(lambda message: not message.is_command())
