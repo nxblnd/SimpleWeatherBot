@@ -21,6 +21,13 @@ async def send_welcome(message: types.message):
                          "Type /help to get this message again.")
 
 
+@dispatcher.message_handler(commands='current')
+async def send_current_weather(message: types.message):
+    _, city = message.get_full_command()
+    coords = get_city_coords(city)
+    await message.answer(get_weather(coords['lat'], coords['lon']))
+
+
 def get_city_coords(city: str) -> dict[str, float]:
     r = requests.get(OWM_links['geocoding'], params={'q': city,
                                                      'appid': os.getenv('OWM_TOKEN'),
@@ -34,8 +41,9 @@ async def not_command(message: types.message):
     await message.answer("I don't understand this, try using some commands")
 
 
-def get_weather(city: str) -> list[dict[str, Any]]:
-    r = requests.get(OWM_links['current'], params={'q': city,
+def get_weather(lat: float, lon: float) -> list[dict[str, Any]]:
+    r = requests.get(OWM_links['current'], params={'lat': lat,
+                                                   'lon': lon,
                                                    'appid': os.getenv('OWM_TOKEN'),
                                                    'units': 'metric'})
     return r.json()
