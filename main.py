@@ -47,6 +47,11 @@ def get_city_coords(city: str) -> dict[str, float]:
     return {'lat': geodata[0]['lat'], 'lon': geodata[0]['lon']}
 
 
+@dispatcher.message_handler(lambda message: message.is_command())
+async def unknown_command(message: types.message):
+    await message.answer("This command is incorrect, type /help to get list of commands")
+
+
 @dispatcher.message_handler(lambda message: not message.is_command())
 async def not_command(message: types.message):
     await message.answer("I don't understand this, try using some commands")
