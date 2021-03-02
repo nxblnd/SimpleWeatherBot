@@ -25,7 +25,17 @@ async def send_welcome(message: types.message):
 async def send_current_weather(message: types.message):
     _, city = message.get_full_command()
     coords = get_city_coords(city)
-    await message.answer(get_weather(coords['lat'], coords['lon']))
+    weather = get_weather(coords['lat'], coords['lon'])
+    await message.answer(build_current_weather_msg(weather))
+
+
+def build_current_weather_msg(weather: dict[str, Any]) -> str:
+    return f"Current weather in {weather['name']} is {weather['weather'][0]['main']}\n" \
+           f"Temperature is {round(weather['main']['temp'])}℃ (feels like {round(weather['main']['feels_like'])}℃)\n" \
+           f"Atmospheric pressure is {weather['main']['pressure']} kPa\n" \
+           f"Air humidity is {weather['main']['humidity']}%\n" \
+           f"Wind direction is {weather['wind']['deg']}° with {weather['wind']['speed']} m/s speed\n" \
+           f"Cloudiness is {weather['clouds']['all']}%"
 
 
 def get_city_coords(city: str) -> dict[str, float]:
@@ -41,7 +51,7 @@ async def not_command(message: types.message):
     await message.answer("I don't understand this, try using some commands")
 
 
-def get_weather(lat: float, lon: float) -> list[dict[str, Any]]:
+def get_weather(lat: float, lon: float) -> dict[str, Any]:
     r = requests.get(OWM_links['current'], params={'lat': lat,
                                                    'lon': lon,
                                                    'appid': os.getenv('OWM_TOKEN'),
