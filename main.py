@@ -17,8 +17,8 @@ async def send_welcome(message: types.message):
 
 
 @dispatcher.message_handler(lambda message: not message.is_command())
-async def get_city(message: types.message):
-    await message.answer(f"Your city is {message.text}" + str(get_weather(message.text)))
+async def not_command(message: types.message):
+    await message.answer("I don't understand this, try using some commands")
 
 
 def get_weather(city: str) -> map:
