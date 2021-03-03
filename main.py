@@ -18,6 +18,8 @@ def main():
 async def send_welcome(message: types.message):
     await message.answer("I'm simple weather bot. Powered by OpenWeatherMap data.\n\n"
                          "Use /current command with city name to get current weather.\n"
+                         "Use /day command with city name to get forecast for a day.\n"
+                         "Use /week command with city name to get forecast for a week\n"
                          "Type /help to get this message again.")
 
 
