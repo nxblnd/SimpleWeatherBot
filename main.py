@@ -5,7 +5,7 @@ from typing import Any
 from aiogram import Bot, Dispatcher, executor, types
 
 from OwmExceptions import OwmNoResponse, OwmLocationException
-from OwmRequests import get_weather, get_city_coords, get_all_weather
+from OwmRequests import get_weather, get_city_coords, get_all_weather, get_city_by_coords
 
 bot = Bot(os.getenv('BOT_TOKEN'))
 dispatcher = Dispatcher(bot)
@@ -35,7 +35,7 @@ async def send_current_weather(message: types.message):
         await message.answer(build_current_weather_msg(weather))
 
 
-@dispatcher.message_handler(commands='onecall')
+@dispatcher.message_handler(commands='forecast')
 async def send_onecall_weather(message: types.message):
     _, city = message.get_full_command()
     try:
@@ -46,7 +46,8 @@ async def send_onecall_weather(message: types.message):
     except OwmNoResponse:
         await message.answer("No connection to OpenWeatherMap")
     else:
-        await message.answer(build_onecall_msg(weather))
+        city = await get_city_by_coords(weather['lat'], weather['lon'])
+        await message.answer(build_onecall_msg(weather, city))
 
 
 def build_current_weather_msg(weather: dict[str, Any]) -> str:
@@ -59,8 +60,8 @@ def build_current_weather_msg(weather: dict[str, Any]) -> str:
            f"Cloudiness is {weather['clouds']['all']}%"
 
 
-def build_onecall_msg(weather: dict[str, Any]) -> str:
-    return f"Current weather at lat {weather['lat']}, lon {weather['lon']} is {weather['current']['weather'][0]['main']}\n" \
+def build_onecall_msg(weather: dict[str, Any], city: str) -> str:
+    return f"Current weather in {city} is {weather['current']['weather'][0]['main']}\n" \
            f"Temperature is {round(weather['current']['temp'])}℃ " \
            f"(feels like {round(weather['current']['feels_like'])}℃)\n" \
            f"Atmospheric pressure is {weather['current']['pressure']} kPa\n" \
