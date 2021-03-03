@@ -50,6 +50,21 @@ async def send_day_weather(message: types.message):
         await message.answer(build_day_weather_msg(weather, city))
 
 
+@dispatcher.message_handler(commands='week')
+async def send_day_weather(message: types.message):
+    _, city = message.get_full_command()
+    try:
+        coords = await get_city_coords(city)
+        weather = await get_all_weather(coords['lat'], coords['lon'])
+    except OwmLocationException:
+        await message.answer('This location could not be found in OpenWeatherMap database')
+    except OwmNoResponse:
+        await message.answer("No connection to OpenWeatherMap")
+    else:
+        city = await get_city_by_coords(weather['lat'], weather['lon'])
+        await message.answer(build_week_weather_msg(weather, city))
+
+
 def build_current_weather_msg(weather: dict[str, Any]) -> str:
     return f"Current weather in {weather['name']} is {weather['weather'][0]['main']}\n" \
            f"Temperature is {round(weather['main']['temp'])}℃ " \
@@ -61,10 +76,20 @@ def build_current_weather_msg(weather: dict[str, Any]) -> str:
 
 
 def build_day_weather_msg(weather: dict[str, Any], city: str) -> str:
-    return ''.join(f"• {time.strftime('%H:00', time.gmtime(hour['dt'] + weather['timezone_offset']))} "
+    return f"Weather in {city} in next 24 hours:\n" + \
+           ''.join(f"• {time.strftime('%H:00', time.gmtime(hour['dt'] + weather['timezone_offset']))} "
                    f"{hour['weather'][0]['main']},\n"
                    f"  {round(hour['temp'])}℃ (feels like {round(hour['feels_like'])}℃).\n"
                    f"  Probability of precipitation {round(hour['pop'] * 100)}%\n" for hour in weather['hourly'][:24])
+
+
+def build_week_weather_msg(weather: dict[str, Any], city: str) -> str:
+    return f"Weather in {city} in next 7 days:\n" + \
+           ''.join(f"• {time.strftime('%d-%M', time.gmtime(day['dt'] + weather['timezone_offset']))} "
+                   f"{day['weather'][0]['main']},\n"
+                   f"  at day {round(day['temp']['day'])}℃ (feels like {round(day['feels_like']['day'])}℃),\n"
+                   f"  at night {round(day['temp']['night'])}℃ (feels like {round(day['feels_like']['night'])}℃),\n"
+                   f"  Probability of precipitation {round(day['pop'] * 100)}%\n" for day in weather['daily'])
 
 
 @dispatcher.message_handler(lambda message: message.is_command())
