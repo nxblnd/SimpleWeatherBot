@@ -87,7 +87,7 @@ def build_day_weather_msg(weather: dict[str, Any], city: str) -> str:
 
 def build_week_weather_msg(weather: dict[str, Any], city: str) -> str:
     return f"Weather in {city} in next 7 days:\n" + \
-           ''.join(f"• {time.strftime('%d-%M', time.gmtime(day['dt'] + weather['timezone_offset']))} "
+           ''.join(f"• {time.strftime('%Y-%m-%d', time.gmtime(day['dt'] + weather['timezone_offset']))} "
                    f"{day['weather'][0]['main']},\n"
                    f"  at day {round(day['temp']['day'])}℃ (feels like {round(day['feels_like']['day'])}℃),\n"
                    f"  at night {round(day['temp']['night'])}℃ (feels like {round(day['feels_like']['night'])}℃),\n"
