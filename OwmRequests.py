@@ -48,7 +48,7 @@ async def get_all_weather(lat: float, lon: float) -> dict[str, float]:
                                                    'lon': lon,
                                                    'appid': os.getenv('OWM_TOKEN'),
                                                    'units': 'metric',
-                                                   'exclude': ['minutely', 'daily']})
+                                                   'exclude': ['current', 'minutely', 'alerts']})
     if r.status_code != requests.codes.OK:
         raise OwmNoResponse
     return r.json()

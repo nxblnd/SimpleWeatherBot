@@ -35,8 +35,8 @@ async def send_current_weather(message: types.message):
         await message.answer(build_current_weather_msg(weather))
 
 
-@dispatcher.message_handler(commands='forecast')
-async def send_onecall_weather(message: types.message):
+@dispatcher.message_handler(commands='day')
+async def send_day_weather(message: types.message):
     _, city = message.get_full_command()
     try:
         coords = await get_city_coords(city)
@@ -47,7 +47,7 @@ async def send_onecall_weather(message: types.message):
         await message.answer("No connection to OpenWeatherMap")
     else:
         city = await get_city_by_coords(weather['lat'], weather['lon'])
-        await message.answer(build_onecall_msg(weather, city))
+        await message.answer(build_day_weather_msg(weather, city))
 
 
 def build_current_weather_msg(weather: dict[str, Any]) -> str:
@@ -60,19 +60,11 @@ def build_current_weather_msg(weather: dict[str, Any]) -> str:
            f"Cloudiness is {weather['clouds']['all']}%"
 
 
-def build_onecall_msg(weather: dict[str, Any], city: str) -> str:
-    return f"Current weather in {city} is {weather['current']['weather'][0]['main']}\n" \
-           f"Temperature is {round(weather['current']['temp'])}℃ " \
-           f"(feels like {round(weather['current']['feels_like'])}℃)\n" \
-           f"Atmospheric pressure is {weather['current']['pressure']} kPa\n" \
-           f"Air humidity is {weather['current']['humidity']}%\n" \
-           f"Wind direction is {weather['current']['wind_deg']}° with {weather['current']['wind_speed']} m/s speed\n" \
-           f"Cloudiness is {weather['current']['clouds']}%\n\n" \
-           f"In next 12 hours:\n" + \
-           ''.join(f"• {time.strftime('%H:00', time.gmtime(hour['dt'] + weather['timezone_offset']))} "
+def build_day_weather_msg(weather: dict[str, Any], city: str) -> str:
+    return ''.join(f"• {time.strftime('%H:00', time.gmtime(hour['dt'] + weather['timezone_offset']))} "
                    f"{hour['weather'][0]['main']},\n"
                    f"  {round(hour['temp'])}℃ (feels like {round(hour['feels_like'])}℃).\n"
-                   f"  Probability of precipitation {round(hour['pop'] * 100)}%\n" for hour in weather['hourly'][:12])
+                   f"  Probability of precipitation {round(hour['pop'] * 100)}%\n" for hour in weather['hourly'][:24])
 
 
 @dispatcher.message_handler(lambda message: message.is_command())
