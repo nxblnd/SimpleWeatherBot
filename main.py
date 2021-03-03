@@ -25,9 +25,15 @@ async def send_welcome(message: types.message):
 @dispatcher.message_handler(commands='current')
 async def send_current_weather(message: types.message):
     _, city = message.get_full_command()
-    coords = get_city_coords(city)
-    weather = get_weather(coords['lat'], coords['lon'])
-    await message.answer(build_current_weather_msg(weather))
+    try:
+        coords = get_city_coords(city)
+        weather = get_weather(coords['lat'], coords['lon'])
+    except OwmLocationException:
+        await message.answer('This location could not be found in OpenWeatherMap database')
+    except OwmNoResponse:
+        await message.answer("No connection to OpenWeatherMap")
+    else:
+        await message.answer(build_current_weather_msg(weather))
 
 
 def build_current_weather_msg(weather: dict[str, Any]) -> str:
@@ -39,11 +45,23 @@ def build_current_weather_msg(weather: dict[str, Any]) -> str:
            f"Cloudiness is {weather['clouds']['all']}%"
 
 
+class OwmNoResponse(Exception):
+    pass
+
+
+class OwmLocationException(Exception):
+    pass
+
+
 def get_city_coords(city: str) -> dict[str, float]:
     r = requests.get(OWM_links['geocoding'], params={'q': city,
                                                      'appid': os.getenv('OWM_TOKEN'),
                                                      'limit': 1})
+    if r.status_code != requests.codes.OK:
+        raise OwmNoResponse
     geodata = r.json()
+    if not geodata:
+        raise OwmLocationException('City not found')
     return {'lat': geodata[0]['lat'], 'lon': geodata[0]['lon']}
 
 
@@ -62,6 +80,8 @@ def get_weather(lat: float, lon: float) -> dict[str, Any]:
                                                    'lon': lon,
                                                    'appid': os.getenv('OWM_TOKEN'),
                                                    'units': 'metric'})
+    if r.status_code != requests.codes.OK:
+        raise OwmNoResponse
     return r.json()
 
 
