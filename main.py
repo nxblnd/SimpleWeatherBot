@@ -1,6 +1,6 @@
 import os
 import time
-from typing import Any
+from typing import Any, Callable
 
 from aiogram import Bot, Dispatcher, executor, types
 
@@ -26,36 +26,20 @@ async def send_welcome(message: types.message):
 
 @dispatcher.message_handler(commands='current')
 async def send_current_weather(message: types.message):
-    _, city = message.get_full_command()
-    try:
-        coords = await get_city_coords(city)
-        weather = await get_weather(coords['lat'], coords['lon'])
-    except OwmLocationException:
-        await message.answer('This location could not be found in OpenWeatherMap database')
-    except OwmNoResponse:
-        await message.answer("No connection to OpenWeatherMap")
-    else:
-        city = await get_city_by_coords(weather['lat'], weather['lon'])
-        await message.answer(build_current_weather_msg(weather, city))
+    await process_message(message, build_day_weather_msg)
 
 
 @dispatcher.message_handler(commands='day')
 async def send_day_weather(message: types.message):
-    _, city = message.get_full_command()
-    try:
-        coords = await get_city_coords(city)
-        weather = await get_weather(coords['lat'], coords['lon'])
-    except OwmLocationException:
-        await message.answer('This location could not be found in OpenWeatherMap database')
-    except OwmNoResponse:
-        await message.answer("No connection to OpenWeatherMap")
-    else:
-        city = await get_city_by_coords(weather['lat'], weather['lon'])
-        await message.answer(build_day_weather_msg(weather, city))
+    await process_message(message, build_day_weather_msg)
 
 
 @dispatcher.message_handler(commands='week')
 async def send_day_weather(message: types.message):
+    await process_message(message, build_week_weather_msg)
+
+
+async def process_message(message: types.message, answer_builder: Callable[[dict[str, Any], str], str]):
     _, city = message.get_full_command()
     try:
         coords = await get_city_coords(city)
@@ -66,7 +50,7 @@ async def send_day_weather(message: types.message):
         await message.answer("No connection to OpenWeatherMap")
     else:
         city = await get_city_by_coords(weather['lat'], weather['lon'])
-        await message.answer(build_week_weather_msg(weather, city))
+        await message.answer(answer_builder(weather, city))
 
 
 def build_current_weather_msg(weather: dict[str, Any], city: str) -> str:
