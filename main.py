@@ -26,7 +26,7 @@ async def send_welcome(message: types.message):
 
 @dispatcher.message_handler(commands='current')
 async def send_current_weather(message: types.message):
-    await process_message(message, build_day_weather_msg)
+    await process_message(message, build_current_weather_msg)
 
 
 @dispatcher.message_handler(commands='day')
