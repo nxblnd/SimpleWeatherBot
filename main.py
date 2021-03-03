@@ -4,6 +4,8 @@ from typing import Any
 from aiogram import Bot, Dispatcher, executor, types
 import requests
 
+from OwmExceptions import OwmNoResponse, OwmLocationException
+
 bot = Bot(os.getenv('BOT_TOKEN'))
 dispatcher = Dispatcher(bot)
 
@@ -43,14 +45,6 @@ def build_current_weather_msg(weather: dict[str, Any]) -> str:
            f"Air humidity is {weather['main']['humidity']}%\n" \
            f"Wind direction is {weather['wind']['deg']}° with {weather['wind']['speed']} m/s speed\n" \
            f"Cloudiness is {weather['clouds']['all']}%"
-
-
-class OwmNoResponse(Exception):
-    pass
-
-
-class OwmLocationException(Exception):
-    pass
 
 
 async def get_city_coords(city: str) -> dict[str, float]:
