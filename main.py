@@ -26,8 +26,8 @@ async def send_welcome(message: types.message):
 async def send_current_weather(message: types.message):
     _, city = message.get_full_command()
     try:
-        coords = get_city_coords(city)
-        weather = get_weather(coords['lat'], coords['lon'])
+        coords = await get_city_coords(city)
+        weather = await get_weather(coords['lat'], coords['lon'])
     except OwmLocationException:
         await message.answer('This location could not be found in OpenWeatherMap database')
     except OwmNoResponse:
@@ -53,7 +53,7 @@ class OwmLocationException(Exception):
     pass
 
 
-def get_city_coords(city: str) -> dict[str, float]:
+async def get_city_coords(city: str) -> dict[str, float]:
     r = requests.get(OWM_links['geocoding'], params={'q': city,
                                                      'appid': os.getenv('OWM_TOKEN'),
                                                      'limit': 1})
@@ -75,7 +75,7 @@ async def not_command(message: types.message):
     await message.answer("I don't understand this, try using some commands")
 
 
-def get_weather(lat: float, lon: float) -> dict[str, Any]:
+async def get_weather(lat: float, lon: float) -> dict[str, Any]:
     r = requests.get(OWM_links['current'], params={'lat': lat,
                                                    'lon': lon,
                                                    'appid': os.getenv('OWM_TOKEN'),
