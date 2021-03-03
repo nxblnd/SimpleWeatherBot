@@ -1,11 +1,11 @@
 import os
 import time
-from typing import Any, Callable
+from typing import Callable
 
 from aiogram import Bot, Dispatcher, executor, types
 
 from OwmExceptions import OwmNoResponse, OwmLocationException
-from OwmRequests import get_weather, get_city_coords, get_city_by_coords
+from OwmRequests import get_weather, get_city_coords, get_city_by_coords, JSON
 
 bot = Bot(os.getenv('BOT_TOKEN'))
 dispatcher = Dispatcher(bot)
@@ -39,7 +39,7 @@ async def send_day_weather(message: types.message):
     await process_message(message, build_week_weather_msg)
 
 
-async def process_message(message: types.message, answer_builder: Callable[[dict[str, Any], str], str]):
+async def process_message(message: types.message, answer_builder: Callable[[JSON, str], str]):
     _, city = message.get_full_command()
     try:
         coords = await get_city_coords(city)
@@ -53,7 +53,7 @@ async def process_message(message: types.message, answer_builder: Callable[[dict
         await message.answer(answer_builder(weather, city))
 
 
-def build_current_weather_msg(weather: dict[str, Any], city: str) -> str:
+def build_current_weather_msg(weather: JSON, city: str) -> str:
     weather = weather['current']
     return f"Current weather in {city} is {weather['weather'][0]['main']}\n" \
            f"Temperature is {round(weather['temp'])}℃ " \
@@ -64,7 +64,7 @@ def build_current_weather_msg(weather: dict[str, Any], city: str) -> str:
            f"Cloudiness is {weather['clouds']}%"
 
 
-def build_day_weather_msg(weather: dict[str, Any], city: str) -> str:
+def build_day_weather_msg(weather: JSON, city: str) -> str:
     return f"Weather in {city} in next 24 hours:\n" + \
            ''.join(f"• {time.strftime('%H:00', time.gmtime(hour['dt'] + weather['timezone_offset']))} "
                    f"{hour['weather'][0]['main']},\n"
@@ -72,7 +72,7 @@ def build_day_weather_msg(weather: dict[str, Any], city: str) -> str:
                    f"  Probability of precipitation {round(hour['pop'] * 100)}%\n" for hour in weather['hourly'][:24])
 
 
-def build_week_weather_msg(weather: dict[str, Any], city: str) -> str:
+def build_week_weather_msg(weather: JSON, city: str) -> str:
     return f"Weather in {city} in next 7 days:\n" + \
            ''.join(f"• {time.strftime('%Y-%m-%d', time.gmtime(day['dt'] + weather['timezone_offset']))} "
                    f"{day['weather'][0]['main']},\n"
