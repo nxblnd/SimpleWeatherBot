@@ -1,4 +1,5 @@
 import os
+import sys
 from typing import NewType, Any
 
 import requests
@@ -12,10 +13,15 @@ OWM_links = {'current': 'https://api.openweathermap.org/data/2.5/weather',
 
 JSON = NewType('JSON', dict[str, Any])
 
+OWM_TOKEN = os.getenv('OWM_TOKEN', 'no_token_found')
+if OWM_TOKEN == 'no_token_found':
+    sys.exit("No OpenWeatherMap token was found in ENV. "
+             "Set 'OWM_TOKEN' variable to your token from OpenWeatherMap account")
+
 
 async def get_city_coords(city: str) -> dict[str, float]:
     r = requests.get(OWM_links['geocoding'], params={'q': city,
-                                                     'appid': os.getenv('OWM_TOKEN'),
+                                                     'appid': OWM_TOKEN,
                                                      'limit': 1})
     if r.status_code != requests.codes.OK:
         raise OwmNoResponse
@@ -28,7 +34,7 @@ async def get_city_coords(city: str) -> dict[str, float]:
 async def get_city_by_coords(lat: float, lon: float) -> str:
     r = requests.get(OWM_links['reverse_geocoding'], params={'lat': lat,
                                                              'lon': lon,
-                                                             'appid': os.getenv('OWM_TOKEN'),
+                                                             'appid': OWM_TOKEN,
                                                              'limit': 1})
     if r.status_code != requests.codes.OK:
         raise OwmNoResponse
@@ -38,7 +44,7 @@ async def get_city_by_coords(lat: float, lon: float) -> str:
 async def get_weather(lat: float, lon: float) -> JSON:
     r = requests.get(OWM_links['onecall'], params={'lat': lat,
                                                    'lon': lon,
-                                                   'appid': os.getenv('OWM_TOKEN'),
+                                                   'appid': OWM_TOKEN,
                                                    'units': 'metric',
                                                    'exclude': ['minutely', 'alerts']})
     if r.status_code != requests.codes.OK:

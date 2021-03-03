@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 from typing import Callable
 
@@ -7,7 +8,10 @@ from aiogram import Bot, Dispatcher, executor, types
 from OwmExceptions import OwmNoResponse, OwmLocationException
 from OwmRequests import get_weather, get_city_coords, get_city_by_coords, JSON
 
-bot = Bot(os.getenv('BOT_TOKEN'))
+BOT_TOKEN = os.getenv('BOT_TOKEN', 'no_token_found')
+if BOT_TOKEN == 'no_token_found':
+    sys.exit("No bot token was found in ENV. Set 'BOT_TOKEN' variable to your token from @BotFather")
+bot = Bot(BOT_TOKEN)
 dispatcher = Dispatcher(bot)
 
 
