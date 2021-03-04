@@ -3,7 +3,8 @@ create table cities
     id   integer primary key,
     name text,
     lat  real,
-    lon  real
+    lon  real,
+    unique (name, lat, lon)
 );
 create table users
 (
