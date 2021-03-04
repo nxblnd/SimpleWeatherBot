@@ -54,7 +54,9 @@ async def set_default_city(message: types.message):
         cursor.execute('update users set default_city_id = :id where chat_id = :chat_id', {'chat_id': message.chat.id,
                                                                                            'id': cursor.lastrowid})
     except sqlite3.IntegrityError:
-        pass
+        db.execute('update users '
+                   'set default_city_id = (select id as city_id from cities where name = :city_name) '
+                   'where chat_id = :chat_id', {'chat_id': message.chat.id, 'city_name': city_data['name']})
 
     await message.answer(f"Your city is set to {city_data['name']}")
     db.commit()
