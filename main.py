@@ -1,4 +1,5 @@
 import os
+import sqlite3
 import sys
 import time
 from typing import Callable
@@ -13,16 +14,28 @@ if BOT_TOKEN == 'no_token_found':
     sys.exit("No bot token was found in ENV. Set 'BOT_TOKEN' variable to your token from @BotFather")
 bot = Bot(BOT_TOKEN)
 dispatcher = Dispatcher(bot)
+db = sqlite3.connect('/var/database/database.sqlite')
 
 
 def main():
     executor.start_polling(dispatcher, skip_updates=True)
 
 
-@dispatcher.message_handler(commands=['start', 'help'])
-async def send_welcome(message: types.message):
-    await message.answer("I'm simple weather bot. Powered by OpenWeatherMap data.\n\n"
-                         "Use /current command with city name to get current weather.\n"
+@dispatcher.message_handler(commands='start')
+async def send_hello(message: types.message):
+    try:
+        db.execute('insert into users (chat_id) values (:chat_id)', {'chat_id': message.chat.id})
+    except sqlite3.IntegrityError:
+        await message.answer("If you want to get help, use /help command")
+    else:
+        db.commit()
+        await message.answer("I'm simple weather bot. Powered by OpenWeatherMap data.\n"
+                             "Type /help to get list of commands")
+
+
+@dispatcher.message_handler(commands='help')
+async def send_help(message: types.message):
+    await message.answer("Use /current command with city name to get current weather.\n"
                          "Use /day command with city name to get forecast for a day.\n"
                          "Use /week command with city name to get forecast for a week\n"
                          "Type /help to get this message again.")
