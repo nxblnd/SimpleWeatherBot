@@ -45,8 +45,9 @@ async def send_help(message: types.message):
 async def set_default_city(message: types.message):
     _, city = message.get_full_command()
     city_data = await get_city_data(city)
-    cursor = db.cursor()
+
     try:
+        cursor = db.cursor()
         cursor.execute('insert into cities (name, lat, lon) values (:name, :lat, :lon)', {'name': city_data['name'],
                                                                                           'lat': city_data['lat'],
                                                                                           'lon': city_data['lon']})
@@ -54,6 +55,7 @@ async def set_default_city(message: types.message):
                                                                                            'id': cursor.lastrowid})
     except sqlite3.IntegrityError:
         pass
+
     await message.answer(f"Your city is set to {city_data['name']}")
     db.commit()
 
@@ -75,11 +77,21 @@ async def send_day_weather(message: types.message):
 
 async def process_message(message: types.message, answer_builder: Callable[[JSON, str], str]):
     _, city = message.get_full_command()
+    if city:
+        try:
+            coords = await get_city_coords(city)
+        except OwmLocationException:
+            await message.answer('This location could not be found in OpenWeatherMap database')
+            return
+    else:
+        coords = dict(zip(('name', 'lat', 'lon'),
+                          db.execute('select name, lat, lon '
+                                     '   from users join cities '
+                                     '   where chat_id = :chat_id and '
+                                     '         cities.id = default_city_id;', {'chat_id': message.chat.id}).fetchone()))
+
     try:
-        coords = await get_city_coords(city)
         weather = await get_weather(coords['lat'], coords['lon'])
-    except OwmLocationException:
-        await message.answer('This location could not be found in OpenWeatherMap database')
     except OwmNoResponse:
         await message.answer("No connection to OpenWeatherMap")
     else:
