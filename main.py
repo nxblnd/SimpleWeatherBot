@@ -86,11 +86,17 @@ async def process_message(message: types.message, answer_builder: Callable[[JSON
             await message.answer('This location could not be found in OpenWeatherMap database')
             return
     else:
-        coords = dict(zip(('name', 'lat', 'lon'),
-                          db.execute('select name, lat, lon '
-                                     '   from users join cities '
-                                     '   where chat_id = :chat_id and '
-                                     '         cities.id = default_city_id;', {'chat_id': message.chat.id}).fetchone()))
+        try:
+            coords = dict(zip(('name', 'lat', 'lon'),
+                              db.execute('select name, lat, lon '
+                                         '   from users join cities '
+                                         '   where chat_id = :chat_id and '
+                                         '         cities.id = default_city_id;',
+                                         {'chat_id': message.chat.id}).fetchone()))
+        except TypeError:
+            await message.answer('To use this command like this you should tell me your city first with /set command.\n'
+                                 'Or try using this command with some city name')
+            return
 
     try:
         weather = await get_weather(coords['lat'], coords['lon'])
