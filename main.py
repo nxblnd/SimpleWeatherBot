@@ -23,14 +23,8 @@ def main():
 
 @dispatcher.message_handler(commands='start')
 async def send_hello(message: types.message):
-    try:
-        db.execute('insert into users (chat_id) values (:chat_id)', {'chat_id': message.chat.id})
-    except sqlite3.IntegrityError:
-        await message.answer("If you want to get help, use /help command")
-    else:
-        db.commit()
-        await message.answer("I'm simple weather bot. Powered by OpenWeatherMap data.\n"
-                             "Type /help to get list of commands")
+    await message.answer("I'm simple weather bot. Powered by OpenWeatherMap data.\n"
+                         "Type /help to get list of commands")
 
 
 @dispatcher.message_handler(commands='help')
@@ -52,16 +46,22 @@ async def set_default_city(message: types.message):
     city_data = await get_city_data(city)
 
     try:
+        db.execute('insert into users (user_id) values (:user_id)', {'user_id': message.from_user.id})
+    except sqlite3.IntegrityError:
+        pass
+
+    try:
         cursor = db.cursor()
         cursor.execute('insert into cities (name, lat, lon) values (:name, :lat, :lon)', {'name': city_data['name'],
                                                                                           'lat': city_data['lat'],
                                                                                           'lon': city_data['lon']})
-        cursor.execute('update users set default_city_id = :id where chat_id = :chat_id', {'chat_id': message.chat.id,
-                                                                                           'id': cursor.lastrowid})
+        cursor.execute('update users '
+                       'set default_city_id = :id '
+                       'where user_id = :user_id', {'user_id': message.from_user.id, 'id': cursor.lastrowid})
     except sqlite3.IntegrityError:
         db.execute('update users '
                    'set default_city_id = (select id as city_id from cities where name = :city_name) '
-                   'where chat_id = :chat_id', {'chat_id': message.chat.id, 'city_name': city_data['name']})
+                   'where user_id = :user_id', {'user_id': message.from_user.id, 'city_name': city_data['name']})
 
     await message.answer(f"Your city is set to {city_data['name']}")
     db.commit()
@@ -98,9 +98,9 @@ async def process_message(message: types.message, answer_builder: Callable[[JSON
             coords = dict(zip(('name', 'lat', 'lon'),
                               db.execute('select name, lat, lon '
                                          '   from users join cities '
-                                         '   where chat_id = :chat_id and '
+                                         '   where user_id = :user_id and '
                                          '         cities.id = default_city_id;',
-                                         {'chat_id': message.chat.id}).fetchone()))
+                                         {'user_id': message.from_user.id}).fetchone()))
         except TypeError:
             await message.answer('To use this command like this you should tell me your city first with /set command.\n'
                                  'Or try using this command with some city name.\n'
