@@ -1,4 +1,5 @@
 import os
+import sqlite3
 import sys
 import time
 from typing import Callable
@@ -6,26 +7,59 @@ from typing import Callable
 from aiogram import Bot, Dispatcher, executor, types
 
 from OwmExceptions import OwmNoResponse, OwmLocationException
-from OwmRequests import get_weather, get_city_coords, get_city_by_coords, JSON
+from OwmRequests import get_weather, get_city_coords, get_city_by_coords, JSON, get_city_data
 
 BOT_TOKEN = os.getenv('BOT_TOKEN', 'no_token_found')
 if BOT_TOKEN == 'no_token_found':
     sys.exit("No bot token was found in ENV. Set 'BOT_TOKEN' variable to your token from @BotFather")
 bot = Bot(BOT_TOKEN)
 dispatcher = Dispatcher(bot)
+db = sqlite3.connect('/var/db/weatherbot/database.sqlite')
 
 
 def main():
     executor.start_polling(dispatcher, skip_updates=True)
 
 
-@dispatcher.message_handler(commands=['start', 'help'])
-async def send_welcome(message: types.message):
-    await message.answer("I'm simple weather bot. Powered by OpenWeatherMap data.\n\n"
-                         "Use /current command with city name to get current weather.\n"
+@dispatcher.message_handler(commands='start')
+async def send_hello(message: types.message):
+    try:
+        db.execute('insert into users (chat_id) values (:chat_id)', {'chat_id': message.chat.id})
+    except sqlite3.IntegrityError:
+        await message.answer("If you want to get help, use /help command")
+    else:
+        db.commit()
+        await message.answer("I'm simple weather bot. Powered by OpenWeatherMap data.\n"
+                             "Type /help to get list of commands")
+
+
+@dispatcher.message_handler(commands='help')
+async def send_help(message: types.message):
+    await message.answer("Use /current command with city name to get current weather.\n"
                          "Use /day command with city name to get forecast for a day.\n"
                          "Use /week command with city name to get forecast for a week\n"
                          "Type /help to get this message again.")
+
+
+@dispatcher.message_handler(commands='set')
+async def set_default_city(message: types.message):
+    _, city = message.get_full_command()
+    city_data = await get_city_data(city)
+
+    try:
+        cursor = db.cursor()
+        cursor.execute('insert into cities (name, lat, lon) values (:name, :lat, :lon)', {'name': city_data['name'],
+                                                                                          'lat': city_data['lat'],
+                                                                                          'lon': city_data['lon']})
+        cursor.execute('update users set default_city_id = :id where chat_id = :chat_id', {'chat_id': message.chat.id,
+                                                                                           'id': cursor.lastrowid})
+    except sqlite3.IntegrityError:
+        db.execute('update users '
+                   'set default_city_id = (select id as city_id from cities where name = :city_name) '
+                   'where chat_id = :chat_id', {'chat_id': message.chat.id, 'city_name': city_data['name']})
+
+    await message.answer(f"Your city is set to {city_data['name']}")
+    db.commit()
 
 
 @dispatcher.message_handler(commands='current')
@@ -44,12 +78,31 @@ async def send_day_weather(message: types.message):
 
 
 async def process_message(message: types.message, answer_builder: Callable[[JSON, str], str]):
+    # I don't know, how it happened, but this shit exists and i kinda don't know what to do with it.
+    # TLDR: if city name is provided, go to OWM, else get coords from DB. Then try to get weather and respond to user.
+
     _, city = message.get_full_command()
+    if city:
+        try:
+            coords = await get_city_coords(city)
+        except OwmLocationException:
+            await message.answer('This location could not be found in OpenWeatherMap database')
+            return
+    else:
+        try:
+            coords = dict(zip(('name', 'lat', 'lon'),
+                              db.execute('select name, lat, lon '
+                                         '   from users join cities '
+                                         '   where chat_id = :chat_id and '
+                                         '         cities.id = default_city_id;',
+                                         {'chat_id': message.chat.id}).fetchone()))
+        except TypeError:
+            await message.answer('To use this command like this you should tell me your city first with /set command.\n'
+                                 'Or try using this command with some city name')
+            return
+
     try:
-        coords = await get_city_coords(city)
         weather = await get_weather(coords['lat'], coords['lon'])
-    except OwmLocationException:
-        await message.answer('This location could not be found in OpenWeatherMap database')
     except OwmNoResponse:
         await message.answer("No connection to OpenWeatherMap")
     else:

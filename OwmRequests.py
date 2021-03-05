@@ -20,6 +20,11 @@ if OWM_TOKEN == 'no_token_found':
 
 
 async def get_city_coords(city: str) -> dict[str, float]:
+    geodata = await get_city_data(city)
+    return {'lat': geodata['lat'], 'lon': geodata['lon']}
+
+
+async def get_city_data(city: str) -> JSON:
     r = requests.get(OWM_links['geocoding'], params={'q': city,
                                                      'appid': OWM_TOKEN,
                                                      'limit': 1})
@@ -28,7 +33,7 @@ async def get_city_coords(city: str) -> dict[str, float]:
     geodata = r.json()
     if not geodata:
         raise OwmLocationException('City not found')
-    return {'lat': geodata[0]['lat'], 'lon': geodata[0]['lon']}
+    return geodata[0]
 
 
 async def get_city_by_coords(lat: float, lon: float) -> str:
