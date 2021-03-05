@@ -4,7 +4,7 @@ WORKDIR /usr/weatherbot/
 VOLUME /var/db/weatherbot
 
 RUN pip install pipenv
-COPY *.py Pipfile Pipfile.lock *.sql ./
+COPY src/ Pipfile Pipfile.lock ./
 RUN pipenv install --system --deploy --ignore-pipfile
 
 CMD python main.py
