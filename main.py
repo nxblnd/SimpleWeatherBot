@@ -14,7 +14,12 @@ if BOT_TOKEN == 'no_token_found':
     sys.exit("No bot token was found in ENV. Set 'BOT_TOKEN' variable to your token from @BotFather")
 bot = Bot(BOT_TOKEN)
 dispatcher = Dispatcher(bot)
+
 db = sqlite3.connect('/var/db/weatherbot/database.sqlite')
+with open('DatabaseSetup.sql', 'r') as setup_script:
+    database_setup = setup_script.read()
+    db.executescript(database_setup)
+    db.commit()
 
 
 def main():

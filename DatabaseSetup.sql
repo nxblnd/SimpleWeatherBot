@@ -1,4 +1,4 @@
-create table cities
+create table if not exists cities
 (
     id   integer primary key,
     name text,
@@ -6,7 +6,7 @@ create table cities
     lon  real,
     unique (name, lat, lon)
 );
-create table users
+create table if not exists users
 (
     id              integer primary key,
     user_id         integer unique,
