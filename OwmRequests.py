@@ -18,6 +18,18 @@ if OWM_TOKEN == 'no_token_found':
     sys.exit("No OpenWeatherMap token was found in ENV. "
              "Set 'OWM_TOKEN' variable to your token from OpenWeatherMap account")
 
+OWM_WEATHER_CONDITIONS = {
+    '01d': '☀', '01n': '🌙',
+    '02d': '🌤', '02n': '🌤',
+    '03d': '🌥', '03n': '🌥',
+    '04d': '☁', '04n': '☁',
+    '09d': '🌧', '09n': '🌧',
+    '10d': '🌧', '10n': '🌧',
+    '11d': '⛈', '11n': '⛈',
+    '13d': '❄', '13n': '❄',
+    '50d': '🌫', '50n': '🌫',
+}
+
 
 async def get_city_coords(city: str) -> dict[str, float]:
     geodata = await get_city_data(city)

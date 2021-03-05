@@ -7,7 +7,7 @@ from typing import Callable
 from aiogram import Bot, Dispatcher, executor, types
 
 from OwmExceptions import OwmNoResponse, OwmLocationException
-from OwmRequests import get_weather, get_city_coords, get_city_by_coords, JSON, get_city_data
+from OwmRequests import get_weather, get_city_coords, get_city_by_coords, JSON, get_city_data, OWM_WEATHER_CONDITIONS
 
 BOT_TOKEN = os.getenv('BOT_TOKEN', 'no_token_found')
 if BOT_TOKEN == 'no_token_found':
@@ -112,30 +112,68 @@ async def process_message(message: types.message, answer_builder: Callable[[JSON
 
 def build_current_weather_msg(weather: JSON, city: str) -> str:
     weather = weather['current']
-    return f"Current weather in {city} is {weather['weather'][0]['main']}\n" \
-           f"Temperature is {round(weather['temp'])}℃ " \
+    wind_deg = weather['wind_deg']
+    if 315 + 22.5 <= wind_deg or 0 <= wind_deg < 22.5:
+        wind = 'N'
+    elif 0 + 22.5 <= wind_deg < 45 + 22.5:
+        wind = 'NE'
+    elif 45 + 22.5 <= wind_deg < 90 + 22.5:
+        wind = 'E'
+    elif 90 + 22.5 <= wind_deg < 135 + 22.5:
+        wind = 'SE'
+    elif 135 + 22.5 <= wind_deg < 180 + 22.5:
+        wind = 'S'
+    elif 180 + 22.5 <= wind_deg < 225 + 22.5:
+        wind = 'SW'
+    elif 225 + 22.5 <= wind_deg < 270 + 22.5:
+        wind = 'W'
+    elif 270 + 22.5 <= wind_deg < 315 + 22.5:
+        wind = 'NW'
+    else:
+        wind = '***COMPASS IS BROKEN***'
+    return f"Current weather in {city} is {weather['weather'][0]['main']} " \
+           f"{OWM_WEATHER_CONDITIONS[weather['weather'][0]['icon']]}\n" \
+           f"🌡 Temperature is {round(weather['temp'])}℃ " \
            f"(feels like {round(weather['feels_like'])}℃)\n" \
-           f"Atmospheric pressure is {weather['pressure']} kPa\n" \
-           f"Air humidity is {weather['humidity']}%\n" \
-           f"Wind direction is {weather['wind_deg']}° with {weather['wind_speed']} m/s speed\n" \
-           f"Cloudiness is {weather['clouds']}%"
+           f"🌀 Atmospheric pressure is {weather['pressure']} kPa\n" \
+           f"💧 Air humidity is {weather['humidity']}%\n" \
+           f"🧭 Wind direction is {wind} with 🌬 {weather['wind_speed']} m/s speed\n" \
+           f"☁ Cloudiness is {weather['clouds']}%"
 
 
 def build_day_weather_msg(weather: JSON, city: str) -> str:
-    return f"Weather in {city} in next 24 hours:\n" + \
-           ''.join(f"• {time.strftime('%H:00', time.gmtime(hour['dt'] + weather['timezone_offset']))} "
-                   f"{hour['weather'][0]['main']},\n"
-                   f"  {round(hour['temp'])}℃ (feels like {round(hour['feels_like'])}℃).\n"
-                   f"  Probability of precipitation {round(hour['pop'] * 100)}%\n" for hour in weather['hourly'][:24])
+    hours = []
+    for hour in weather['hourly'][:24]:
+        pop = round(hour['pop'] * 100)
+        if 0 <= pop < 33:
+            pop_sign = '🌂'
+        elif 33 <= pop < 66:
+            pop_sign = '☂'
+        else:
+            pop_sign = '☔'
+        hours.append(f"• {time.strftime('%H:00', time.gmtime(hour['dt'] + weather['timezone_offset']))} "
+                     f"{hour['weather'][0]['main']} {OWM_WEATHER_CONDITIONS[hour['weather'][0]['icon']]}, "
+                     f" 🌡 {round(hour['temp'])}℃ (feels like {round(hour['feels_like'])}℃)."
+                     f" {pop_sign}{round(hour['pop'] * 100)}%\n")
+    return f"Weather in {city} in next 24 hours:\n" + ''.join(hours)
 
 
 def build_week_weather_msg(weather: JSON, city: str) -> str:
-    return f"Weather in {city} in next 7 days:\n" + \
-           ''.join(f"• {time.strftime('%Y-%m-%d', time.gmtime(day['dt'] + weather['timezone_offset']))} "
-                   f"{day['weather'][0]['main']},\n"
-                   f"  at day {round(day['temp']['day'])}℃ (feels like {round(day['feels_like']['day'])}℃),\n"
-                   f"  at night {round(day['temp']['night'])}℃ (feels like {round(day['feels_like']['night'])}℃),\n"
-                   f"  Probability of precipitation {round(day['pop'] * 100)}%\n" for day in weather['daily'])
+    days = []
+    for day in weather['daily']:
+        pop = round(day['pop'] * 100)
+        if 0 <= pop < 33:
+            pop_sign = '🌂'
+        elif 33 <= pop < 66:
+            pop_sign = '☂'
+        else:
+            pop_sign = '☔'
+        days.append(f"• {time.strftime('%Y-%m-%d', time.gmtime(day['dt'] + weather['timezone_offset']))} "
+                    f"{day['weather'][0]['main']} {OWM_WEATHER_CONDITIONS[day['weather'][0]['icon']]},\n"
+                    f" 🌞 at day 🌡 {round(day['temp']['day'])}℃ (feels like {round(day['feels_like']['day'])}℃),\n"
+                    f" 🌜 at night 🌡 {round(day['temp']['night'])}℃ (feels like {round(day['feels_like']['night'])}℃),\n"
+                    f" {pop_sign} {round(day['pop'] * 100)}%\n")
+    return f"Weather in {city} in next 7 days:\n" + ''.join(days)
 
 
 @dispatcher.message_handler(lambda message: message.is_command())
