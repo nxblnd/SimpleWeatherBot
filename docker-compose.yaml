@@ -1,0 +1,13 @@
+version: "3"
+services:
+  weatherbot:
+    build: ./
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - type: volume
+        source: database
+        target: /var/db/weatherbot
+volumes:
+  database:
