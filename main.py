@@ -35,9 +35,10 @@ async def send_hello(message: types.message):
 
 @dispatcher.message_handler(commands='help')
 async def send_help(message: types.message):
-    await message.answer("Use /current command with city name to get current weather.\n"
-                         "Use /day command with city name to get forecast for a day.\n"
-                         "Use /week command with city name to get forecast for a week\n"
+    await message.answer("I can work in two modes: for your city and for every other: \n"
+                         "• Tell me your home city with /set command, and use /current, /day or /week "
+                         "commands to get current weather, weather for a day or week respectfully.\n"
+                         "• Use /current, /day or /week commands with some city name to get weather for that city.\n"
                          "Type /help to get this message again.")
 
 
