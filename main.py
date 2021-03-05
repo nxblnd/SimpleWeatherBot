@@ -45,6 +45,10 @@ async def send_help(message: types.message):
 @dispatcher.message_handler(commands='set')
 async def set_default_city(message: types.message):
     _, city = message.get_full_command()
+    if not city:
+        await message.answer("Please provide city name")
+        return
+
     city_data = await get_city_data(city)
 
     try:
