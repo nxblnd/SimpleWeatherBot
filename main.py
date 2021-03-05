@@ -156,7 +156,7 @@ def build_day_weather_msg(weather: JSON, city: str) -> str:
             pop_sign = '☂'
         else:
             pop_sign = '☔'
-        hours.append(f"• {time.strftime('%H:00', time.gmtime(hour['dt'] + weather['timezone_offset']))} "
+        hours.append(f"{time.strftime('%H:00', time.gmtime(hour['dt'] + weather['timezone_offset']))} "
                      f"{hour['weather'][0]['main']} {OWM_WEATHER_CONDITIONS[hour['weather'][0]['icon']]}, "
                      f" 🌡 {round(hour['temp'])}℃ (feels like {round(hour['feels_like'])}℃)."
                      f" {pop_sign}{round(hour['pop'] * 100)}%\n")
