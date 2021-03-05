@@ -78,6 +78,9 @@ async def send_day_weather(message: types.message):
 
 
 async def process_message(message: types.message, answer_builder: Callable[[JSON, str], str]):
+    # I don't know, how it happened, but this shit exists and i kinda don't know what to do with it.
+    # TLDR: if city name is provided, go to OWM, else get coords from DB. Then try to get weather and respond to user.
+
     _, city = message.get_full_command()
     if city:
         try:
