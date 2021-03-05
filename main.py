@@ -173,11 +173,11 @@ def build_week_weather_msg(weather: JSON, city: str) -> str:
             pop_sign = '☂'
         else:
             pop_sign = '☔'
-        days.append(f"• {time.strftime('%Y-%m-%d', time.gmtime(day['dt'] + weather['timezone_offset']))} "
+        days.append(f"• {time.strftime('%Y-%m-%d, %a,', time.gmtime(day['dt'] + weather['timezone_offset']))} "
                     f"{day['weather'][0]['main']} {OWM_WEATHER_CONDITIONS[day['weather'][0]['icon']]},\n"
                     f" 🌞 at day 🌡 {round(day['temp']['day'])}℃ (feels like {round(day['feels_like']['day'])}℃),\n"
                     f" 🌜 at night 🌡 {round(day['temp']['night'])}℃ (feels like {round(day['feels_like']['night'])}℃),\n"
-                    f" {pop_sign} {round(day['pop'] * 100)}%\n")
+                    f" {pop_sign} {round(day['pop'] * 100)}%\n\n")
     return f"Weather in {city} in next 7 days:\n" + ''.join(days)
 
 
