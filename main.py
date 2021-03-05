@@ -103,7 +103,8 @@ async def process_message(message: types.message, answer_builder: Callable[[JSON
                                          {'chat_id': message.chat.id}).fetchone()))
         except TypeError:
             await message.answer('To use this command like this you should tell me your city first with /set command.\n'
-                                 'Or try using this command with some city name')
+                                 'Or try using this command with some city name.\n'
+                                 'If you are using bot in group chat, do not forget to initialize bot with /start.')
             return
 
     try:
@@ -157,9 +158,9 @@ def build_day_weather_msg(weather: JSON, city: str) -> str:
         else:
             pop_sign = '☔'
         hours.append(f"{time.strftime('%H:00', time.gmtime(hour['dt'] + weather['timezone_offset']))} "
-                     f"{hour['weather'][0]['main']} {OWM_WEATHER_CONDITIONS[hour['weather'][0]['icon']]}, "
+                     f"{hour['weather'][0]['main']} {OWM_WEATHER_CONDITIONS[hour['weather'][0]['icon']]},\n"
                      f" 🌡 {round(hour['temp'])}℃ (feels like {round(hour['feels_like'])}℃)."
-                     f" {pop_sign}{round(hour['pop'] * 100)}%\n")
+                     f" {pop_sign}{round(hour['pop'] * 100)}%\n\n")
     return f"Weather in {city} in next 24 hours:\n" + ''.join(hours)
 
 
@@ -188,6 +189,8 @@ async def unknown_command(message: types.message):
 
 @dispatcher.message_handler(lambda message: not message.is_command())
 async def not_command(message: types.message):
+    if message.reply_to_message:
+        return
     await message.answer("I don't understand this, try using some commands")
 
 
