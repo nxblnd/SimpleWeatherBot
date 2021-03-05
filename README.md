@@ -5,10 +5,8 @@ It is rather training thing. The main aim of this little project was to get fami
 
 ## How to launch
 
-Create a sqlite database with `DatabaseSetup.sql` script with following path `/var/db/weatherbot/database.sqlite`.
-
-Provide two ENV variables: 
-`BOT_TOKEN` with token from @BotFather bot from Telegram and 
+Provide two ENV variables:
+`BOT_TOKEN` with token from @BotFather bot from Telegram and
 `OWM_TOKEN` with token from [OpenWeatherMap](https://home.openweathermap.org/api_keys) (bot works with free tier).
 
-Dockerfile is available. 
+Use docker-compose for easy launch (put variables in `.env` file in project root).
