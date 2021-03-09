@@ -5,6 +5,9 @@ import time
 from typing import Callable
 
 from aiogram import Bot, Dispatcher, executor, types
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.state import StatesGroup, State
 
 from OwmExceptions import OwmNoResponse, OwmLocationException
 from OwmRequests import get_weather, get_city_coords, get_city_by_coords, JSON, get_city_data, OWM_WEATHER_CONDITIONS
@@ -13,7 +16,7 @@ BOT_TOKEN = os.getenv('BOT_TOKEN', 'no_token_found')
 if BOT_TOKEN == 'no_token_found':
     sys.exit("No bot token was found in ENV. Set 'BOT_TOKEN' variable to your token from @BotFather")
 bot = Bot(BOT_TOKEN)
-dispatcher = Dispatcher(bot)
+dispatcher = Dispatcher(bot, storage=MemoryStorage())
 
 db = sqlite3.connect('/var/db/weatherbot/database.sqlite')
 with open('DatabaseSetup.sql', 'r') as setup_script:
@@ -24,6 +27,10 @@ with open('DatabaseSetup.sql', 'r') as setup_script:
 
 def main():
     executor.start_polling(dispatcher, skip_updates=True)
+
+
+class CitySetter(StatesGroup):
+    city_name = State()
 
 
 @dispatcher.message_handler(commands='start')
@@ -43,18 +50,21 @@ async def send_help(message: types.message):
 
 @dispatcher.message_handler(commands='set')
 async def set_default_city(message: types.message):
-    _, city = message.get_full_command()
-    if not city:
-        await message.answer("Please provide city name")
+    await CitySetter.city_name.set()
+    await message.answer('What is your city?')
+
+
+@dispatcher.message_handler(state=CitySetter.city_name)
+async def process_city_name(message: types.Message, state: FSMContext):
+    try:
+        city_data = await get_city_data(message.text)
+    except OwmLocationException:
+        await message.answer('This location could not be found in OpenWeatherMap database')
         return
-
-    city_data = await get_city_data(city)
-
     try:
         db.execute('insert into users (user_id) values (:user_id)', {'user_id': message.from_user.id})
     except sqlite3.IntegrityError:
         pass
-
     try:
         cursor = db.cursor()
         cursor.execute('insert into cities (name, lat, lon) values (:name, :lat, :lon)', {'name': city_data['name'],
@@ -70,6 +80,16 @@ async def set_default_city(message: types.message):
 
     await message.answer(f"Your city is set to {city_data['name']}")
     db.commit()
+    await state.finish()
+
+
+@dispatcher.message_handler(commands='cancel', state='*')
+async def cancel_handler(message: types.Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state is None:
+        return
+    await state.finish()
+    await message.answer('Action cancelled')
 
 
 @dispatcher.message_handler(commands='current')
