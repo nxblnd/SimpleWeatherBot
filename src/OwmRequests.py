@@ -13,8 +13,8 @@ OWM_links = {'current': 'https://api.openweathermap.org/data/2.5/weather',
 
 JSON = NewType('JSON', dict[str, Any])
 
-OWM_TOKEN = os.getenv('OWM_TOKEN', 'no_token_found')
-if OWM_TOKEN == 'no_token_found':
+OWM_TOKEN = os.getenv('OWM_TOKEN')
+if not OWM_TOKEN:
     sys.exit("No OpenWeatherMap token was found in ENV. "
              "Set 'OWM_TOKEN' variable to your token from OpenWeatherMap account")
 

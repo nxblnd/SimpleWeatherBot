@@ -13,7 +13,7 @@ from OwmExceptions import OwmNoResponse, OwmLocationException
 from OwmRequests import get_weather, get_city_coords, get_city_by_coords, JSON, get_city_data, OWM_WEATHER_CONDITIONS
 
 BOT_TOKEN = os.getenv('BOT_TOKEN', 'no_token_found')
-if BOT_TOKEN == 'no_token_found':
+if not BOT_TOKEN:
     sys.exit("No bot token was found in ENV. Set 'BOT_TOKEN' variable to your token from @BotFather")
 bot = Bot(BOT_TOKEN)
 dispatcher = Dispatcher(bot, storage=MemoryStorage())
