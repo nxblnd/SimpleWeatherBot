@@ -5,10 +5,10 @@ name = "pypi"
 
 [packages]
 requests = "*"
-aiogram = "*"
+aiogram = "2.20"
 
 [dev-packages]
 pytest = "*"
 
 [requires]
-python_version = "3.9"
+python_version = "3.10"
