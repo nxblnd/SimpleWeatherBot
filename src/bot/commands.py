@@ -136,11 +136,15 @@ async def send_week_weather(message: types.message):
 def register_handlers(dispatcher: Dispatcher):
     dispatcher.register_message_handler(send_hello, CommandStart())
     dispatcher.register_message_handler(send_help, CommandHelp())
+    dispatcher.register_message_handler(cancel_handler, commands=['cancel'])
+
+    location.register_location_handler(dispatcher)
 
 
 async def set_commands(bot: Bot):
     en_commands = [
         BotCommand(command="/current", description="Get current weather"),
+        BotCommand(command="/location", description="Set your current location")
     ]
     await bot.set_my_commands(en_commands)
 
